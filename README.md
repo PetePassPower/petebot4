@@ -50,19 +50,25 @@ streamlit run app.py
 ## Deploy (Render)
 
 `render.yaml`을 사용해 [Render](https://render.com)의 무료 웹 서비스 티어에
-REST API(`api.py`)를 배포할 수 있습니다.
+REST API(`api.py`)와 Streamlit UI(`app.py`)를 각각 별도 서비스로 배포할 수
+있습니다. FastAPI와 Streamlit은 서로 다른 서버 프로세스라 하나의 URL로
+합칠 수는 없지만, `render.yaml` 하나로 두 서비스를 한 번에 관리합니다.
 
 1. 이 저장소를 GitHub에 올립니다.
 2. Render 대시보드에서 "New" → "Blueprint"로 이 저장소를 연결하면
-   `render.yaml`을 자동으로 인식합니다.
-3. `OPENROUTER_API_KEY`, `API_KEY` 환경변수 값을 Render 대시보드에서
-   직접 입력합니다(`render.yaml`에는 값이 들어있지 않습니다).
-4. 배포가 끝나면 `https://<서비스명>.onrender.com/chat`이 외부에서 접속
-   가능한 엔드포인트입니다.
+   `render.yaml`의 두 서비스(`petebot4`, `petebot4-ui`)를 자동으로 인식합니다.
+3. 환경변수 값을 Render 대시보드에서 직접 입력합니다(`render.yaml`에는 값이
+   들어있지 않습니다):
+   - `petebot4` 서비스: `OPENROUTER_API_KEY`, `API_KEY`
+   - `petebot4-ui` 서비스: `API_KEY`(위와 같은 값)
+4. 배포가 끝나면:
+   - REST API: `https://petebot4.onrender.com/chat`
+   - Streamlit UI: `https://petebot4-ui.onrender.com`
+   - UI는 `API_BASE_URL`(`render.yaml`에 이미 배포된 API 주소로 설정됨)을
+     통해 자동으로 REST API를 호출합니다.
 
 무료 티어는 일정 시간 요청이 없으면 슬립 상태가 되어 첫 요청 응답이
-느릴 수 있습니다. Streamlit UI(`app.py`)는 이 배포에 포함되지 않으며,
-로컬에서만 실행하거나 별도 서비스로 배포해야 합니다.
+느릴 수 있습니다.
 
 ## Tests
 
