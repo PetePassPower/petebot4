@@ -1,6 +1,7 @@
 import logging
 import os
 import secrets
+from typing import Literal
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -26,8 +27,17 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="petebot4", docs_url=None, redoc_url=None, openapi_url=None)
 
 
+MAX_HISTORY_MESSAGES = 6  # 3 turns of (user, assistant)
+
+
+class HistoryMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1)
+
+
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1)
+    history: list[HistoryMessage] = Field(default_factory=list)
 
 
 def verify_api_key(x_api_key: str | None = Header(default=None)) -> None:
@@ -49,8 +59,12 @@ def index():
 
 @app.post("/chat")
 def chat(body: ChatRequest, _: None = Depends(verify_api_key)):
+    history = [
+        {"role": h.role, "content": h.content} for h in body.history[-MAX_HISTORY_MESSAGES:]
+    ]
+
     try:
-        reply = get_reply(body.message)
+        reply = get_reply(body.message, history=history)
     except Exception:
         logger.exception("get_reply failed")
         return JSONResponse(status_code=500, content={"error": "internal error"})

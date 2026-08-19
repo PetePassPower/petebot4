@@ -23,10 +23,11 @@ uvicorn api:app --host 127.0.0.1 --port 8000
 
 ## Web UI
 
-`GET /`에서 제공되는 채팅 화면입니다. 화면에는 이전 대화가 계속 표시되지만,
-서버(`/chat`)에는 매번 현재 메시지만 전송됩니다(단일 턴 API). 페이지의
-JavaScript는 같은 서버의 `/chat`을 호출하며, 이때 필요한 `X-API-Key` 값은
-서버가 페이지를 렌더링할 때 `.env`의 `API_KEY`를 그대로 심어서 내려줍니다.
+`GET /`에서 제공되는 채팅 화면입니다. 최근 3턴(사용자+챗봇 대화 6개 메시지)을
+브라우저가 기억해서 매 요청마다 함께 보내므로, 바로 전 대화 맥락을 이어서
+답변합니다. 페이지의 JavaScript는 같은 서버의 `/chat`을 호출하며, 이때 필요한
+`X-API-Key` 값은 서버가 페이지를 렌더링할 때 `.env`의 `API_KEY`를 그대로
+심어서 내려줍니다.
 
 > **주의:** 이 방식은 페이지 소스를 보면 누구나 `API_KEY` 값을 확인할 수
 > 있습니다 — 외부에서 `/chat`을 직접 호출하는 것과 사실상 동일한 수준의
@@ -34,18 +35,30 @@ JavaScript는 같은 서버의 `/chat`을 호출하며, 이때 필요한 `X-API-
 
 ## REST API
 
-단일 턴 text-to-text `/chat` 엔드포인트입니다. 서버는 대화 이력을 저장하지 않으며,
-매 응답에 사용된 모델 이름이 함께 반환됩니다.
+text-to-text `/chat` 엔드포인트입니다. 서버 자체는 대화 이력을 저장하지
+않는 무상태(stateless) API이며, 맥락을 이어가려면 호출하는 쪽에서 최근 대화를
+`history`로 함께 보내야 합니다. 매 응답에 사용된 모델 이름도 함께 반환됩니다.
 
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -H "X-API-Key: <.env의 API_KEY 값>" \
-  -d '{"message": "안녕"}'
+  -d '{
+    "message": "내 이름이 뭐라고 했지?",
+    "history": [
+      {"role": "user", "content": "내 이름은 민준이야"},
+      {"role": "assistant", "content": "네, 민준님! 기억할게요."}
+    ]
+  }'
 # -> {"reply": "...", "model": "openai/gpt-oss-20b"}
 ```
 
-`X-API-Key`가 없거나 틀리면 401, `message`가 없거나 빈 문자열이면 422를 반환합니다.
+`history`는 선택 항목이며(생략하면 단일 턴으로 동작), `role`은 `user` 또는
+`assistant`만 허용됩니다. 최근 3턴(6개 메시지)을 넘겨 보내도 서버가 마지막
+6개만 사용하도록 자릅니다.
+
+`X-API-Key`가 없거나 틀리면 401, `message`가 없거나 빈 문자열이면 422,
+`history`의 `role`이 `user`/`assistant`가 아니면 422를 반환합니다.
 
 ## Deploy (Render)
 

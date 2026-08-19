@@ -28,6 +28,27 @@ def test_chat_completion_sends_system_and_user_messages_and_returns_reply():
     )
 
 
+def test_chat_completion_includes_history_between_system_and_user_messages():
+    client = _mock_client("hello there")
+    history = [
+        {"role": "user", "content": "first question"},
+        {"role": "assistant", "content": "first answer"},
+    ]
+
+    result = chat_completion(client, "system prompt", "hi", history=history)
+
+    assert result == "hello there"
+    client.chat.completions.create.assert_called_once_with(
+        model=DEFAULT_MODEL,
+        messages=[
+            {"role": "system", "content": "system prompt"},
+            {"role": "user", "content": "first question"},
+            {"role": "assistant", "content": "first answer"},
+            {"role": "user", "content": "hi"},
+        ],
+    )
+
+
 def test_chat_completion_raises_on_empty_content():
     client = _mock_client("")
 
@@ -65,3 +86,25 @@ def test_get_reply_returns_chat_completion_result(monkeypatch):
     result = get_reply("hi")
 
     assert result == "mocked reply"
+
+
+def test_get_reply_passes_history_through_to_chat_completion(monkeypatch):
+    client = _mock_client("mocked reply")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+
+    from petebot4 import llm as llm_module
+
+    monkeypatch.setattr(llm_module, "get_client", lambda api_key: client)
+    history = [{"role": "user", "content": "earlier"}, {"role": "assistant", "content": "earlier reply"}]
+
+    get_reply("hi", history=history)
+
+    client.chat.completions.create.assert_called_once_with(
+        model=DEFAULT_MODEL,
+        messages=[
+            {"role": "system", "content": llm_module.SYSTEM_PROMPT},
+            {"role": "user", "content": "earlier"},
+            {"role": "assistant", "content": "earlier reply"},
+            {"role": "user", "content": "hi"},
+        ],
+    )

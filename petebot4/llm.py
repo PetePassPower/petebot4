@@ -13,11 +13,14 @@ def get_client(api_key: str) -> OpenAI:
     return OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL, timeout=30.0, max_retries=1)
 
 
-def chat_completion(client, system_prompt: str, user_input: str, model: str = DEFAULT_MODEL) -> str:
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_input},
-    ]
+def chat_completion(
+    client, system_prompt: str, user_input: str, history: list[dict] | None = None, model: str = DEFAULT_MODEL
+) -> str:
+    messages = [{"role": "system", "content": system_prompt}]
+    if history:
+        messages.extend(history)
+    messages.append({"role": "user", "content": user_input})
+
     response = client.chat.completions.create(model=model, messages=messages)
     content = response.choices[0].message.content
     if not content:
@@ -25,7 +28,7 @@ def chat_completion(client, system_prompt: str, user_input: str, model: str = DE
     return content
 
 
-def get_reply(user_message: str) -> str:
+def get_reply(user_message: str, history: list[dict] | None = None) -> str:
     api_key = os.getenv("OPENROUTER_API_KEY")
     client = get_client(api_key)
-    return chat_completion(client, SYSTEM_PROMPT, user_message)
+    return chat_completion(client, SYSTEM_PROMPT, user_message, history=history)

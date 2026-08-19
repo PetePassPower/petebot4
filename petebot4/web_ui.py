@@ -49,9 +49,11 @@ CHAT_PAGE_TEMPLATE = """<!doctype html>
 </div>
 <script>
 const API_KEY = __API_KEY_JSON__;
+const MAX_HISTORY_TURNS = 3;
 const messagesEl = document.getElementById("messages");
 const inputEl = document.getElementById("message-input");
 const buttonEl = document.getElementById("send-button");
+let conversationHistory = [];
 
 function addBubble(role, text) {
   const bubble = document.createElement("div");
@@ -84,7 +86,7 @@ async function sendMessage() {
         "Content-Type": "application/json",
         "X-API-Key": API_KEY,
       },
-      body: JSON.stringify({ message: message }),
+      body: JSON.stringify({ message: message, history: conversationHistory }),
     });
 
     let data;
@@ -100,6 +102,9 @@ async function sendMessage() {
     } else {
       addBubble("assistant", data.reply);
       if (data.model) addCaption(data.model);
+      conversationHistory.push({ role: "user", content: message });
+      conversationHistory.push({ role: "assistant", content: data.reply });
+      conversationHistory = conversationHistory.slice(-MAX_HISTORY_TURNS * 2);
     }
   } catch (networkError) {
     addBubble("error", "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
