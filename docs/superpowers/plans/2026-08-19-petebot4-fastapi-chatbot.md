@@ -16,7 +16,7 @@
 - Env vars: `OPENROUTER_API_KEY`, `API_KEY` — both required at startup, else `RuntimeError` (from spec).
 - Auth: `X-API-Key` header, compared with `secrets.compare_digest` (from spec).
 - Single-turn only — no server-side conversation history (from spec).
-- All HTTP errors return `{"error": "<detail>"}` (from spec).
+- `HTTPException`-based errors (401, 500) return `{"error": "<detail>"}`; 422 validation errors keep FastAPI/Pydantic's default body shape (from spec — this is a deliberate carve-out, not an omission).
 - No Streamlit or other UI (from spec).
 
 ---
