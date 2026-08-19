@@ -20,17 +20,28 @@ selection.
 
 ```
 petebot4/
-  app.py                 # new: Streamlit chat UI
-  api.py                 # unchanged
-  petebot4/               # unchanged
+  app.py                   # new: Streamlit chat UI (rendering only)
+  api.py                   # unchanged
+  petebot4/
+    api_client.py           # new: send_message() HTTP helper, importable without Streamlit
+    llm.py                  # unchanged
+    system_prompt.py        # unchanged
   tests/
-    test_app.py           # new: tests for the HTTP-calling helper
-    test_api.py           # unchanged
-    test_llm.py            # unchanged
-  requirements.txt        # add streamlit, requests
-  .env.example             # add API_BASE_URL
-  README.md               # add "Streamlit UI" section
+    test_api_client.py      # new: tests for send_message()
+    test_api.py             # unchanged
+    test_llm.py             # unchanged
+  requirements.txt          # add streamlit, requests
+  .env.example               # add API_BASE_URL
+  README.md                 # add "Streamlit UI" section
 ```
+
+`send_message` is extracted into `petebot4/api_client.py` rather than
+living in `app.py` itself. Importing `app.py` for a test would execute its
+top-level Streamlit calls (`st.title`, `st.chat_input`, ...) outside a real
+Streamlit runtime, which is unreliable to assert against. Keeping the
+testable HTTP logic in a plain module — importable with no Streamlit
+side effects — mirrors how `petebot4/llm.py` is already kept independent
+of `api.py`.
 
 ## `app.py` Design
 
@@ -42,7 +53,7 @@ petebot4/
   message, since the REST API is single-turn by design.
 - `st.chat_input` collects the user's message; on submit it's appended to
   session state, rendered, then passed to `send_message`.
-- A small, testable function does the actual HTTP call:
+- The actual HTTP call lives in `petebot4/api_client.py`:
 
   ```python
   def send_message(message: str, api_base_url: str, api_key: str) -> dict:
@@ -58,7 +69,8 @@ petebot4/
 
   Raises `requests.HTTPError` on non-2xx (401/422/500) and
   `requests.ConnectionError`/`requests.Timeout` on network failures — all
-  handled by the caller.
+  handled by `app.py`. `app.py` imports it as
+  `from petebot4.api_client import send_message`.
 - The Streamlit rendering loop calls `send_message` and catches:
   - `requests.HTTPError` — shows the server's `error` field (or the raw
     body) as a chat error bubble.
@@ -75,8 +87,8 @@ petebot4/
 
 ## Testing
 
-`tests/test_app.py` mocks `requests.post` (no real network, no Streamlit
-runtime) and tests only `send_message`:
+`tests/test_api_client.py` mocks `requests.post` (no real network, no
+Streamlit runtime) and tests only `send_message`:
 
 - Success: returns the parsed `{"reply": ..., "model": ...}` dict.
 - 401 response: `send_message` raises `requests.HTTPError`.
