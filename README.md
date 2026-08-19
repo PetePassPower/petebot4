@@ -33,6 +33,20 @@ curl -X POST http://localhost:8000/chat \
 
 `X-API-Key`가 없거나 틀리면 401, `message`가 없거나 빈 문자열이면 422를 반환합니다.
 
+## Streamlit UI
+
+REST API 위에 브라우저 채팅 화면을 제공합니다. `api.py`가 먼저 실행 중이어야
+합니다.
+
+```bash
+uvicorn api:app --host 127.0.0.1 --port 8000   # 별도 터미널에서 REST API 실행
+streamlit run app.py
+```
+
+`.env`의 `API_KEY`를 그대로 사용하며, REST API 주소는 `API_BASE_URL`
+(기본값 `http://localhost:8000`)로 설정할 수 있습니다. 화면에는 이전 대화가
+계속 표시되지만, 서버에는 매번 현재 메시지만 전송됩니다(단일 턴 API).
+
 ## Tests
 
 ```bash
