@@ -10,15 +10,3 @@ services:
         sync: false
       - key: API_KEY
         sync: false
-
-  - type: web
-    name: petebot4-ui
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
-    envVars:
-      - key: API_KEY
-        sync: false
-      - key: API_BASE_URL
-        value: https://petebot4.onrender.com

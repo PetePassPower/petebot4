@@ -14,6 +14,15 @@ from api import app
 client = TestClient(app)
 
 
+def test_index_returns_chat_page_with_embedded_api_key():
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert "test-key" in response.text
+    assert "petebot4" in response.text
+
+
 def test_chat_without_api_key_returns_401():
     response = client.post("/chat", json={"message": "hi"})
 

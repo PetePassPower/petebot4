@@ -4,10 +4,11 @@ import secrets
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from petebot4.llm import DISPLAY_MODEL, get_reply
+from petebot4.web_ui import render_chat_page
 
 load_dotenv()
 
@@ -39,6 +40,11 @@ def verify_api_key(x_api_key: str | None = Header(default=None)) -> None:
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
     return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return render_chat_page(API_KEY)
 
 
 @app.post("/chat")
