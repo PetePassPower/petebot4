@@ -47,6 +47,23 @@ streamlit run app.py
 (기본값 `http://localhost:8000`)로 설정할 수 있습니다. 화면에는 이전 대화가
 계속 표시되지만, 서버에는 매번 현재 메시지만 전송됩니다(단일 턴 API).
 
+## Deploy (Render)
+
+`render.yaml`을 사용해 [Render](https://render.com)의 무료 웹 서비스 티어에
+REST API(`api.py`)를 배포할 수 있습니다.
+
+1. 이 저장소를 GitHub에 올립니다.
+2. Render 대시보드에서 "New" → "Blueprint"로 이 저장소를 연결하면
+   `render.yaml`을 자동으로 인식합니다.
+3. `OPENROUTER_API_KEY`, `API_KEY` 환경변수 값을 Render 대시보드에서
+   직접 입력합니다(`render.yaml`에는 값이 들어있지 않습니다).
+4. 배포가 끝나면 `https://<서비스명>.onrender.com/chat`이 외부에서 접속
+   가능한 엔드포인트입니다.
+
+무료 티어는 일정 시간 요청이 없으면 슬립 상태가 되어 첫 요청 응답이
+느릴 수 있습니다. Streamlit UI(`app.py`)는 이 배포에 포함되지 않으며,
+로컬에서만 실행하거나 별도 서비스로 배포해야 합니다.
+
 ## Tests
 
 ```bash
