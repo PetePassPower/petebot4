@@ -436,7 +436,7 @@ git add requirements.txt pyproject.toml .env.example .gitignore README.md
 git commit -m "chore: add project config, env template, and README"
 ```
 
-- [ ] **Step 8: Manual smoke test (requires a real free OpenRouter API key)**
+- [x] **Step 8: Manual smoke test (requires a real free OpenRouter API key)** — done 2026-08-19: real OpenRouter key confirmed working via `openai/gpt-oss-20b:free`, including a Korean-language request/response round trip; response included `"model": "openai/gpt-oss-20b"` as expected.
 
 ```bash
 pip install -r requirements.txt
