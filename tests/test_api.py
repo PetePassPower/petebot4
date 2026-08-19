@@ -65,6 +65,17 @@ def test_chat_llm_failure_returns_500():
     assert response.json() == {"error": "internal error"}
 
 
+def test_chat_with_non_ascii_api_key_returns_401():
+    response = client.post(
+        "/chat",
+        json={"message": "hi"},
+        headers={"X-API-Key": "wrong-é-key".encode("latin-1")},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {"error": "invalid or missing API key"}
+
+
 def test_chat_without_api_key_and_invalid_body_returns_401():
     response = client.post("/chat", json={})
 

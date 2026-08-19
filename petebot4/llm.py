@@ -10,7 +10,7 @@ DISPLAY_MODEL = "openai/gpt-oss-20b"
 
 
 def get_client(api_key: str) -> OpenAI:
-    return OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
+    return OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL, timeout=30.0, max_retries=1)
 
 
 def chat_completion(client, system_prompt: str, user_input: str, model: str = DEFAULT_MODEL) -> str:
@@ -19,7 +19,10 @@ def chat_completion(client, system_prompt: str, user_input: str, model: str = DE
         {"role": "user", "content": user_input},
     ]
     response = client.chat.completions.create(model=model, messages=messages)
-    return response.choices[0].message.content
+    content = response.choices[0].message.content
+    if not content:
+        raise ValueError("model returned empty content")
+    return content
 
 
 def get_reply(user_message: str) -> str:

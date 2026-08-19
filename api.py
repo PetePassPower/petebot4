@@ -15,6 +15,8 @@ API_KEY = os.getenv("API_KEY")
 if not API_KEY:
     raise RuntimeError("API_KEY environment variable is required to start the API")
 
+API_KEY_BYTES = API_KEY.encode("utf-8")
+
 if not os.getenv("OPENROUTER_API_KEY"):
     raise RuntimeError("OPENROUTER_API_KEY environment variable is required to start the API")
 
@@ -28,7 +30,9 @@ class ChatRequest(BaseModel):
 
 
 def verify_api_key(x_api_key: str | None = Header(default=None)) -> None:
-    if x_api_key is None or not secrets.compare_digest(x_api_key, API_KEY):
+    if x_api_key is None or not secrets.compare_digest(
+        x_api_key.encode("utf-8", "surrogateescape"), API_KEY_BYTES
+    ):
         raise HTTPException(status_code=401, detail="invalid or missing API key")
 
 
